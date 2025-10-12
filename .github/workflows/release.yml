@@ -178,7 +178,7 @@ jobs:
     - name: Create Pull Request
       uses: peter-evans/create-pull-request@v5
       with:
-        token: ${{ secrets.GITHUB_TOKEN }}
+        token: ${{ secrets.WINGET_TOKEN }}
         path: winget-pkgs
         commit-message: "New package: Abelfubu.WindowsConfigBuilder version ${{ steps.release_info.outputs.version }}"
         title: "New package: Abelfubu.WindowsConfigBuilder version ${{ steps.release_info.outputs.version }}"
