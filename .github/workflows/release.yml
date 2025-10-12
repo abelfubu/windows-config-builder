@@ -79,148 +79,41 @@ jobs:
 
   winget-submission:
     needs: release
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
     
     steps:
-    - name: Checkout official winget-pkgs
-      uses: actions/checkout@v4
-      with:
-        repository: microsoft/winget-pkgs
-        token: ${{ secrets.GITHUB_TOKEN }}
-        path: winget-pkgs
-
     - name: Get release info
       id: release_info
+      shell: pwsh
       run: |
         # Get the latest release info
-        LATEST_RELEASE=$(curl -s https://api.github.com/repos/${{ github.repository }}/releases/latest)
-        VERSION=$(echo $LATEST_RELEASE | jq -r '.tag_name')
-        DOWNLOAD_URL=$(echo $LATEST_RELEASE | jq -r '.assets[0].browser_download_url')
-        echo "version=$VERSION" >> $GITHUB_OUTPUT
-        echo "download_url=$DOWNLOAD_URL" >> $GITHUB_OUTPUT
+        $latestRelease = Invoke-RestMethod -Uri "https://api.github.com/repos/${{ github.repository }}/releases/latest"
+        $version = $latestRelease.tag_name
+        $downloadUrl = $latestRelease.assets[0].browser_download_url
+        echo "version=$version" >> $env:GITHUB_OUTPUT
+        echo "download_url=$downloadUrl" >> $env:GITHUB_OUTPUT
+        Write-Host "Version: $version"
+        Write-Host "Download URL: $downloadUrl"
 
-    - name: Download and hash release
-      id: download
+    - name: Install wingetcreate
+      shell: pwsh
       run: |
-        wget -O windows-config-builder.exe "${{ steps.release_info.outputs.download_url }}"
-        HASH=$(sha256sum windows-config-builder.exe | cut -d' ' -f1)
-        echo "sha256=$HASH" >> $GITHUB_OUTPUT
-
-    - name: Create winget manifest
+        # Install wingetcreate tool
+        Invoke-WebRequest -Uri "https://aka.ms/wingetcreate/latest" -OutFile "wingetcreate.exe"
+        
+    - name: Create and submit winget package
+      shell: pwsh
+      env:
+        WINGET_TOKEN: ${{ secrets.WINGET_TOKEN }}
       run: |
-        VERSION="${{ steps.release_info.outputs.version }}"
-        VERSION_NUM="${VERSION#v}"  # Remove 'v' prefix
-        MANIFEST_DIR="winget-pkgs/manifests/a/Abelfubu/WindowsConfigBuilder/$VERSION_NUM"
+        $version = "${{ steps.release_info.outputs.version }}"
+        $downloadUrl = "${{ steps.release_info.outputs.download_url }}"
+        $versionNum = $version -replace '^v', ''  # Remove 'v' prefix
         
-        mkdir -p "$MANIFEST_DIR"
-        
-        # Create version manifest
-        cat > "$MANIFEST_DIR/Abelfubu.WindowsConfigBuilder.yaml" << EOF
-        # yaml-language-server: \$schema=https://aka.ms/winget-manifest.version.1.5.0.schema.json
-        
-        PackageIdentifier: Abelfubu.WindowsConfigBuilder
-        PackageVersion: $VERSION_NUM
-        DefaultLocale: en-US
-        ManifestType: version
-        ManifestVersion: 1.5.0
-        EOF
-        
-        # Create installer manifest
-        cat > "$MANIFEST_DIR/Abelfubu.WindowsConfigBuilder.installer.yaml" << EOF
-        # yaml-language-server: \$schema=https://aka.ms/winget-manifest.installer.1.5.0.schema.json
-        
-        PackageIdentifier: Abelfubu.WindowsConfigBuilder
-        PackageVersion: $VERSION_NUM
-        MinimumOSVersion: 10.0.0.0
-        InstallerType: portable
-        Commands:
-        - windows-config-builder
-        Installers:
-        - Architecture: x64
-          InstallerUrl: ${{ steps.release_info.outputs.download_url }}
-          InstallerSha256: ${{ steps.download.outputs.sha256 }}
-        ManifestType: installer
-        ManifestVersion: 1.5.0
-        EOF
-        
-        # Create locale manifest
-        cat > "$MANIFEST_DIR/Abelfubu.WindowsConfigBuilder.locale.en-US.yaml" << EOF
-        # yaml-language-server: \$schema=https://aka.ms/winget-manifest.defaultLocale.1.5.0.schema.json
-        
-        PackageIdentifier: Abelfubu.WindowsConfigBuilder
-        PackageVersion: $VERSION_NUM
-        PackageLocale: en-US
-        Publisher: Abelfubu
-        PublisherUrl: https://github.com/${{ github.repository_owner }}
-        PublisherSupportUrl: https://github.com/${{ github.repository }}/issues
-        Author: Abel de la Fuente
-        PackageName: Windows Config Builder
-        PackageUrl: https://github.com/${{ github.repository }}
-        License: MIT
-        LicenseUrl: https://github.com/${{ github.repository }}/blob/main/LICENSE
-        ShortDescription: Automated Windows development environment setup using winget package manager
-        Description: |
-          Windows Config Builder is a tool that automates the setup of a Windows development environment.
-          It uses winget to install selected packages and creates configuration files for various tools
-          including PowerShell, Starship, Neovim, and more.
-        Moniker: windows-config-builder
-        Tags:
-        - automation
-        - configuration
-        - development
-        - setup
-        - winget
-        - windows
-        ManifestType: defaultLocale
-        ManifestVersion: 1.5.0
-        EOF
-
-    - name: Create Pull Request
-      uses: peter-evans/create-pull-request@v5
-      with:
-        token: ${{ secrets.WINGET_TOKEN }}
-        path: winget-pkgs
-        commit-message: "New package: Abelfubu.WindowsConfigBuilder version ${{ steps.release_info.outputs.version }}"
-        title: "New package: Abelfubu.WindowsConfigBuilder version ${{ steps.release_info.outputs.version }}"
-        body: |
-          ## Package Submission
-          
-          **Package Identifier**: Abelfubu.WindowsConfigBuilder  
-          **Package Version**: ${{ steps.release_info.outputs.version }}  
-          **Publisher**: Abelfubu  
-          **Author**: Abel de la Fuente  
-          
-          ## Description
-          Windows Config Builder is a command-line tool that automates the setup of a Windows development environment using the winget package manager. It provides an interactive interface for selecting and installing development tools, then creates optimized configuration files for seamless integration.
-          
-          ## Key Features
-          - Interactive selection from 20+ curated development packages
-          - Automated winget-based installation
-          - Smart configuration file generation (PowerShell, Starship, Neovim, etc.)
-          - Cross-tool integration and environment setup
-          - Self-contained executable with embedded templates
-          
-          ## Package Details
-          - **Type**: Portable executable
-          - **Architecture**: x64
-          - **Minimum OS**: Windows 10/11
-          - **License**: MIT
-          - **Command**: `windows-config-builder`
-          
-          ## Links
-          - **Repository**: https://github.com/${{ github.repository }}
-          - **Release**: https://github.com/${{ github.repository }}/releases/tag/${{ steps.release_info.outputs.version }}
-          - **License**: https://github.com/${{ github.repository }}/blob/main/LICENSE
-          - **Issues**: https://github.com/${{ github.repository }}/issues
-          
-          ## Validation
-          - [x] Package successfully builds and runs on Windows 10/11
-          - [x] All manifest files follow winget schema v1.5.0
-          - [x] SHA256 hash verified for release asset
-          - [x] Package metadata complete and accurate
-          - [x] License and documentation provided
-          
-          ## Testing
-          The package has been tested on Windows 11 with successful installation and configuration of development tools including Git, PowerShell, Neovim, and various CLI utilities.
-        branch: abelfubu-windows-config-builder-${{ steps.release_info.outputs.version }}
-        delete-branch: true
+        # Create new package submission
+        .\wingetcreate.exe new `
+          --urls $downloadUrl `
+          --version $versionNum `
+          --token $env:WINGET_TOKEN `
+          --submit `
+          Abelfubu.WindowsConfigBuilder
