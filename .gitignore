@@ -1,1 +1,24 @@
+# Dependencies
 /node_modules
+
+# Build outputs
+*.exe
+/dist/
+/build/
+
+# Go
+*.mod.backup
+*.sum.backup
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log

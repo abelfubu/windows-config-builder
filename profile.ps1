@@ -1,2 +1,0 @@
-# 💾 Configuration for PowerShell profile
-

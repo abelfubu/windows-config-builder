@@ -1,6 +1,7 @@
 package main
 
 import (
+	"embed"
 	"fmt"
 	"os"
 	"os/exec"
@@ -11,8 +12,11 @@ import (
 	"github.com/charmbracelet/huh"
 )
 
+//go:embed templates/*
+var templates embed.FS
+
 var home = os.Getenv("USERPROFILE")
-var config = filepath.Join(home, ".config")
+var config = filepath.Join(home, ".config-test")
 
 func main() {
 	// Step 1: Install packages
@@ -43,7 +47,6 @@ func installWingetPkgs() []string {
 		"Neovim.Neovim",
 		"Microsoft.PowerShell.Preview",
 		"Microsoft.PowerToys",
-		"MSIX\\Abelfubu.RaindropCommandPaletteExtension",
 		"SUSE.RancherDesktop",
 		"BurntSushi.ripgrep.MSVC",
 		"zig.zig",
@@ -60,12 +63,53 @@ func installWingetPkgs() []string {
 		"ajeetdsouza.zoxide",
 	}
 
+	descriptions := map[string]string{
+		"Git.Git":                                       	"Distributed version control system",
+		"GitHub.cli":                                    	"GitHub's official command line tool",
+		"JesseDuffield.Lazydocker":                      	"Simple terminal UI for docker commands",
+		"CoreyButler.NVMforWindows":                     	"Node Version Manager for Windows",
+		"Neovim.Neovim":                                 	"Hyperextensible Vim-based text editor",
+		"Microsoft.PowerShell.Preview":                  	"Cross-platform automation and configuration tool",
+		"Microsoft.PowerToys":                           	"Windows system utilities to maximize productivity",
+		"SUSE.RancherDesktop":                           	"Container management and Kubernetes on the desktop",
+		"BurntSushi.ripgrep.MSVC":                       	"Recursively searches directories for a regex pattern",
+		"zig.zig":                                       	"General-purpose programming language and toolchain",
+		"sharkdp.bat":                                   	"A cat clone with wings (syntax highlighting)",
+		"Clement.bottom":                                	"Cross-platform graphical process/system monitor",
+		"eza-community.eza":                             	"Modern replacement for 'ls' with colors and icons",
+		"sharkdp.fd":                                    	"Simple, fast and user-friendly alternative to 'find'",
+		"junegunn.fzf":                                  	"Command-line fuzzy finder",
+		"Derailed.k9s":                                  	"Terminal UI to interact with Kubernetes clusters",
+		"LGUG2Z.komorebi":                               	"Tiling window manager for Windows",
+		"JesseDuffield.lazygit":                         	"Simple terminal UI for git commands",
+		"Starship.Starship":                             	"Cross-shell prompt for astronauts",
+		"LGUG2Z.whkd":                                   	"Windows hotkey daemon",
+		"ajeetdsouza.zoxide":                            	"Smarter cd command inspired by z and autojump",
+	}
+
 	var selected []string
+	var options []huh.Option[string]
+	
+	// Find the longest package name for alignment
+	maxLen := 0
+	for _, pkg := range pkgs {
+		if len(pkg) > maxLen {
+			maxLen = len(pkg)
+		}
+	}
+	
+	for _, pkg := range pkgs {
+		desc := descriptions[pkg]
+		padding := (maxLen + 5) - len(pkg)
+		spaces := strings.Repeat(" ", padding)
+		options = append(options, huh.NewOption(fmt.Sprintf("%s%s - %s", pkg, spaces, desc), pkg))
+	}
+
 	form := huh.NewForm(
 		huh.NewGroup(
 			huh.NewMultiSelect[string]().
 				Title("Select packages to install").
-				Options(huh.NewOptions(pkgs...)...).
+				Options(options...).
 				Value(&selected),
 		),
 	)
@@ -75,10 +119,14 @@ func installWingetPkgs() []string {
 	for _, pkg := range selected {
 		fmt.Printf("Installing %s...\n", pkg)
 		cmd := exec.Command("winget", "install", "--id", pkg, "--accept-package-agreements", "--accept-source-agreements", "-h")
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
 		cmd.Run()
 	}
 
-	fmt.Println("✅ Done installing selected packages!")
+	if len(selected) > 0 {
+		fmt.Println("✅ Done installing selected packages!")
+	}
 
 	return selected
 }
@@ -127,30 +175,74 @@ func addNeovimSymlink() {
 func createInitialConfiguration(selectedPackages []string) {
 	os.MkdirAll(config, os.ModePerm)
 
-	profile := getFileContent("profile.ps1")
+	profile := getFileContent("templates/profile.ps1")
 
 	if slices.Contains(selectedPackages, "Starship.Starship") {
 		fmt.Println("Creating initial Starship configuration...")
 		os.MkdirAll(filepath.Join(config, "starship"), os.ModePerm)
-		starshipToml := getFileContent("starship.toml")
+		starshipToml := getFileContent("templates/starship.toml")
 		os.WriteFile(filepath.Join(config, "starship", "starship.toml"), starshipToml, os.ModePerm)
-		profile = append(profile, []byte("\n# Initialize Starship\n$env:STARSHIP_CONFIG=\"$HOME/.config/starship/starship.toml\"\nInvoke-Expression (&starship init powershell)\n")...)
+		profile = append(profile, []byte(`
+# Starship
+$Env:STARSHIP_CONFIG="$HOME/.config/starship/starship.toml"
+Invoke-Expression (&starship init powershell)
+`)...)
 	}
 
 	if slices.Contains(selectedPackages, "ajeetdsouza.zoxide") {
 		fmt.Println("Creating initial Zoxide configuration...")
-		profile = append(profile, []byte("\n# Initialize Zoxide\nInvoke-Expression (& { (zoxide init powershell | Out-String) })\n")...)
+		profile = append(profile, []byte(`
+# Zoxide
+Invoke-Expression (& { (zoxide init powershell | Out-String) })
+`)...)
 	}
 
 	if slices.Contains(selectedPackages, "Neovim.Neovim") {
 		fmt.Println("Creating initial Neovim configuration...")
 		os.MkdirAll(filepath.Join(config, "nvim"), os.ModePerm)
-		initVim := getFileContent("init.lua")
+		initVim := getFileContent("templates/init.lua")
 		os.WriteFile(filepath.Join(config, "nvim", "init.lua"), initVim, os.ModePerm)
 	}
 
+	if slices.Contains(selectedPackages, "sharkdp.bat") {
+		fmt.Println("Creating initial bat configuration...")
+		profile = append(profile, []byte(`
+# Configure bat config directory
+$Env:BAT_CONFIG_DIR="$HOME\.config\bat"
+`)...)
+	}
+
+	if slices.Contains(selectedPackages, "junegunn.fzf") {
+		fmt.Println("Creating initial fzf configuration...")
+		profile = append(profile, []byte(`
+# FZF 
+$Env:FZF_DEFAULT_OPTS=@"
+--preview='bat --color=always {}'
+--bind ctrl-u:preview-up,ctrl-d:preview-down,ctrl-p:toggle-preview
+--color=bg+:#264f78,spinner:#569cd6,hl:#dcdcaa
+--color=fg:#d4d4d4,header:#4ec9b0,info:#d4d4d4,pointer:#569cd6
+--color=marker:#264f78,fg+:#ffffff,prompt:#4fc1ff,hl+:#f44747
+--color=selected-bg:#264f78
+--multi
+"@
+`)...)
+	}
+
+	if slices.Contains(selectedPackages, "LGUG2Z.komorebi") {
+		fmt.Println("Creating initial komorebi configuration...")
+		profile = append(profile, []byte(`
+# Configure komorebi config directory
+$Env:KOMOREBI_CONFIG_HOME = "$HOME\.config\komorebi"
+`)...)
+	}
+
 	if slices.Contains(selectedPackages, "eza-community.eza") {
-		profile = append(profile, []byte("\n# Alias ls to eza\nfunction ls { eza -l --icons $args }\nfunction la { eza -la --icons $args }\nfunction lt { eza --icons -TL $args }\n")...)
+		profile = append(profile, []byte(`
+# EZA
+function ls { eza -l --icons $args }
+function la { eza -la --icons $args }
+function lt { eza --icons -TL $args }
+`)...)
 	}
 
 	os.WriteFile(filepath.Join(config, "profile.ps1"), profile, os.ModePerm)
@@ -170,10 +262,10 @@ func confirm(message string) bool {
 }
 
 func getFileContent(path string) []byte {
-	content, error := os.ReadFile(path)
+	content, error := templates.ReadFile(path)
 
 	if error != nil {
-		fmt.Println("❌ Failed to read file:", error)
+		fmt.Println("❌ Failed to read embedded file:", error)
 		return []byte{}
 	}
 

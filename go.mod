@@ -1,6 +1,6 @@
-module main.go
+module github.com/abelfubu/windows-config-builder
 
-go 1.25.2
+go 1.21
 
 require github.com/charmbracelet/huh v0.7.0
 
