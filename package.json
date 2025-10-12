@@ -1,0 +1,15 @@
+{
+  "name": "windows-config-builder",
+  "version": "1.0.0",
+  "description": "A configuration builder for windows",
+  "main": "index.js",
+  "author": "Abel de la Fuente",
+  "license": "ISC",
+  "scripts": {
+    "start": "npx pinion ./config.tpl.ts"
+  },
+  "type": "module",
+  "dependencies": {
+    "@featherscloud/pinion": "^0.5.5"
+  }
+}
