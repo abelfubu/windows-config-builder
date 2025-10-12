@@ -16,7 +16,7 @@ import (
 var templates embed.FS
 
 var home = os.Getenv("USERPROFILE")
-var config = filepath.Join(home, ".config-test")
+var config = filepath.Join(home, ".config")
 
 func main() {
 	// Step 1: Install packages
