@@ -101,19 +101,18 @@ jobs:
         # Install wingetcreate tool
         Invoke-WebRequest -Uri "https://aka.ms/wingetcreate/latest" -OutFile "wingetcreate.exe"
         
-    - name: Create and submit winget package
+    - name: Create winget manifests locally
+      shell: pwsh
+      run: |
+        $downloadUrl = "${{ steps.release_info.outputs.download_url }}"
+        
+        # Create manifests locally first
+        .\wingetcreate.exe new --out "./manifests" $downloadUrl
+        
+    - name: Submit to winget repository
       shell: pwsh
       env:
         WINGET_TOKEN: ${{ secrets.WINGET_TOKEN }}
       run: |
-        $version = "${{ steps.release_info.outputs.version }}"
-        $downloadUrl = "${{ steps.release_info.outputs.download_url }}"
-        $versionNum = $version -replace '^v', ''  # Remove 'v' prefix
-        
-        # Create new package submission
-        .\wingetcreate.exe new `
-          --urls $downloadUrl `
-          --version $versionNum `
-          --token $env:WINGET_TOKEN `
-          --submit `
-          Abelfubu.WindowsConfigBuilder
+        # Submit the generated manifests
+        .\wingetcreate.exe submit --token $env:WINGET_TOKEN "./manifests"
