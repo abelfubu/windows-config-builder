@@ -1,6 +1,6 @@
 module github.com/abelfubu/windows-config-builder
 
-go 1.21
+go 1.23
 
 require github.com/charmbracelet/huh v0.7.0
 
