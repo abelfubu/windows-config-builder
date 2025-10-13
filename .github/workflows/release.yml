@@ -29,13 +29,17 @@ jobs:
     - name: Tidy dependencies
       run: go mod tidy
 
-    - name: Get version
+    - name: Semantic Version
       id: version
-      run: |
-        # Generate version based on commit count and short SHA
-        VERSION="v$(git rev-list --count HEAD).$(git rev-parse --short HEAD)"
-        echo "version=$VERSION" >> $GITHUB_OUTPUT
-        echo "Version: $VERSION"
+      uses: paulhatch/semantic-version@v5.4.0
+      with:
+        tag_prefix: "v"
+        major_pattern: "(BREAKING CHANGE:|breaking:)"
+        minor_pattern: "(feat:|feature:)"
+        patch_pattern: "(fix:|bugfix:|patch:)"
+        version_format: "${major}.${minor}.${patch}"
+        search_commit_body: true
+        user_format_type: "csv"
 
     - name: Build for Windows
       run: |
@@ -52,8 +56,8 @@ jobs:
     - name: Create Release
       uses: softprops/action-gh-release@v1
       with:
-        tag_name: ${{ steps.version.outputs.version }}
-        name: Release ${{ steps.version.outputs.version }}
+        tag_name: ${{ steps.version.outputs.version_tag }}
+        name: Release ${{ steps.version.outputs.version_tag }}
         body: |
           ## Windows Configuration Builder
           
@@ -80,13 +84,12 @@ jobs:
   winget-submission:
     needs: release
     runs-on: windows-latest
-    
+
     steps:
     - name: Get release info
       id: release_info
       shell: pwsh
       run: |
-        # Get the latest release info
         $latestRelease = Invoke-RestMethod -Uri "https://api.github.com/repos/${{ github.repository }}/releases/latest"
         $version = $latestRelease.tag_name
         $downloadUrl = $latestRelease.assets[0].browser_download_url
@@ -98,21 +101,24 @@ jobs:
     - name: Install wingetcreate
       shell: pwsh
       run: |
-        # Install wingetcreate tool
         Invoke-WebRequest -Uri "https://aka.ms/wingetcreate/latest" -OutFile "wingetcreate.exe"
-        
-    - name: Create winget manifests locally
+
+    - name: Configure git identity (required for PRs)
       shell: pwsh
       run: |
-        $downloadUrl = "${{ steps.release_info.outputs.download_url }}"
-        
-        # Create manifests locally first
-        .\wingetcreate.exe new --out "./manifests" $downloadUrl
-        
-    - name: Submit to winget repository
+        git config --global user.name "github-actions[bot]"
+        git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
+    - name: Submit new version to WinGet
       shell: pwsh
       env:
         WINGET_TOKEN: ${{ secrets.WINGET_TOKEN }}
       run: |
-        # Submit the generated manifests
-        .\wingetcreate.exe submit --token $env:WINGET_TOKEN "./manifests"
+        $version = "${{ steps.release_info.outputs.version }}"
+        $downloadUrl = "${{ steps.release_info.outputs.download_url }}"
+
+        .\wingetcreate.exe update Abelfubu.WindowsConfigBuilder `
+          --version $version `
+          --urls $downloadUrl `
+          --token $env:WINGET_TOKEN `
+          --submit

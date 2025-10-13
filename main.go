@@ -64,32 +64,32 @@ func installWingetPkgs() []string {
 	}
 
 	descriptions := map[string]string{
-		"Git.Git":                                       	"Distributed version control system",
-		"GitHub.cli":                                    	"GitHub's official command line tool",
-		"JesseDuffield.Lazydocker":                      	"Simple terminal UI for docker commands",
-		"CoreyButler.NVMforWindows":                     	"Node Version Manager for Windows",
-		"Neovim.Neovim":                                 	"Hyperextensible Vim-based text editor",
-		"Microsoft.PowerShell.Preview":                  	"Cross-platform automation and configuration tool",
-		"Microsoft.PowerToys":                           	"Windows system utilities to maximize productivity",
-		"SUSE.RancherDesktop":                           	"Container management and Kubernetes on the desktop",
-		"BurntSushi.ripgrep.MSVC":                       	"Recursively searches directories for a regex pattern",
-		"zig.zig":                                       	"General-purpose programming language and toolchain",
-		"sharkdp.bat":                                   	"A cat clone with wings (syntax highlighting)",
-		"Clement.bottom":                                	"Cross-platform graphical process/system monitor",
-		"eza-community.eza":                             	"Modern replacement for 'ls' with colors and icons",
-		"sharkdp.fd":                                    	"Simple, fast and user-friendly alternative to 'find'",
-		"junegunn.fzf":                                  	"Command-line fuzzy finder",
-		"Derailed.k9s":                                  	"Terminal UI to interact with Kubernetes clusters",
-		"LGUG2Z.komorebi":                               	"Tiling window manager for Windows",
-		"JesseDuffield.lazygit":                         	"Simple terminal UI for git commands",
-		"Starship.Starship":                             	"Cross-shell prompt for astronauts",
-		"LGUG2Z.whkd":                                   	"Windows hotkey daemon",
-		"ajeetdsouza.zoxide":                            	"Smarter cd command inspired by z and autojump",
+		"Git.Git":                      "Distributed version control system",
+		"GitHub.cli":                   "GitHub's official command line tool",
+		"JesseDuffield.Lazydocker":     "Simple terminal UI for docker commands",
+		"CoreyButler.NVMforWindows":    "Node Version Manager for Windows",
+		"Neovim.Neovim":                "Hyperextensible Vim-based text editor",
+		"Microsoft.PowerShell.Preview": "Cross-platform automation and configuration tool",
+		"Microsoft.PowerToys":          "Windows system utilities to maximize productivity",
+		"SUSE.RancherDesktop":          "Container management and Kubernetes on the desktop",
+		"BurntSushi.ripgrep.MSVC":      "Recursively searches directories for a regex pattern",
+		"zig.zig":                      "General-purpose programming language and toolchain",
+		"sharkdp.bat":                  "A cat clone with wings (syntax highlighting)",
+		"Clement.bottom":               "Cross-platform graphical process/system monitor",
+		"eza-community.eza":            "Modern replacement for 'ls' with colors and icons",
+		"sharkdp.fd":                   "Simple, fast and user-friendly alternative to 'find'",
+		"junegunn.fzf":                 "Command-line fuzzy finder",
+		"Derailed.k9s":                 "Terminal UI to interact with Kubernetes clusters",
+		"LGUG2Z.komorebi":              "Tiling window manager for Windows",
+		"JesseDuffield.lazygit":        "Simple terminal UI for git commands",
+		"Starship.Starship":            "Cross-shell prompt for astronauts",
+		"LGUG2Z.whkd":                  "Windows hotkey daemon",
+		"ajeetdsouza.zoxide":           "Smarter cd command inspired by z and autojump",
 	}
 
 	var selected []string
 	var options []huh.Option[string]
-	
+
 	// Find the longest package name for alignment
 	maxLen := 0
 	for _, pkg := range pkgs {
@@ -97,7 +97,7 @@ func installWingetPkgs() []string {
 			maxLen = len(pkg)
 		}
 	}
-	
+
 	for _, pkg := range pkgs {
 		desc := descriptions[pkg]
 		padding := (maxLen + 5) - len(pkg)
@@ -178,7 +178,6 @@ func createInitialConfiguration(selectedPackages []string) {
 	profile := getFileContent("templates/profile.ps1")
 
 	if slices.Contains(selectedPackages, "Starship.Starship") {
-		fmt.Println("Creating initial Starship configuration...")
 		os.MkdirAll(filepath.Join(config, "starship"), os.ModePerm)
 		starshipToml := getFileContent("templates/starship.toml")
 		os.WriteFile(filepath.Join(config, "starship", "starship.toml"), starshipToml, os.ModePerm)
@@ -190,7 +189,6 @@ Invoke-Expression (&starship init powershell)
 	}
 
 	if slices.Contains(selectedPackages, "ajeetdsouza.zoxide") {
-		fmt.Println("Creating initial Zoxide configuration...")
 		profile = append(profile, []byte(`
 # Zoxide
 Invoke-Expression (& { (zoxide init powershell | Out-String) })
@@ -198,14 +196,12 @@ Invoke-Expression (& { (zoxide init powershell | Out-String) })
 	}
 
 	if slices.Contains(selectedPackages, "Neovim.Neovim") {
-		fmt.Println("Creating initial Neovim configuration...")
 		os.MkdirAll(filepath.Join(config, "nvim"), os.ModePerm)
 		initVim := getFileContent("templates/init.lua")
 		os.WriteFile(filepath.Join(config, "nvim", "init.lua"), initVim, os.ModePerm)
 	}
 
 	if slices.Contains(selectedPackages, "sharkdp.bat") {
-		fmt.Println("Creating initial bat configuration...")
 		profile = append(profile, []byte(`
 # Configure bat config directory
 $Env:BAT_CONFIG_DIR="$HOME\.config\bat"
@@ -213,9 +209,8 @@ $Env:BAT_CONFIG_DIR="$HOME\.config\bat"
 	}
 
 	if slices.Contains(selectedPackages, "junegunn.fzf") {
-		fmt.Println("Creating initial fzf configuration...")
 		profile = append(profile, []byte(`
-# FZF 
+# FZF
 $Env:FZF_DEFAULT_OPTS=@"
 --preview='bat --color=always {}'
 --bind ctrl-u:preview-up,ctrl-d:preview-down,ctrl-p:toggle-preview
@@ -229,9 +224,8 @@ $Env:FZF_DEFAULT_OPTS=@"
 	}
 
 	if slices.Contains(selectedPackages, "LGUG2Z.komorebi") {
-		fmt.Println("Creating initial komorebi configuration...")
 		profile = append(profile, []byte(`
-# Configure komorebi config directory
+# KOMOREBI
 $Env:KOMOREBI_CONFIG_HOME = "$HOME\.config\komorebi"
 `)...)
 	}
@@ -246,10 +240,12 @@ function lt { eza --icons -TL $args }
 	}
 
 	os.WriteFile(filepath.Join(config, "profile.ps1"), profile, os.ModePerm)
+	fmt.Print("✅ Initial configuration files created!\n")
 }
 
 func confirm(message string) bool {
 	var result bool
+
 	prompt := huh.NewForm(
 		huh.NewGroup(
 			huh.NewConfirm().Title(message).Value(&result),
