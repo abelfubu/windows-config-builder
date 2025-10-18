@@ -233,6 +233,7 @@ $Env:KOMOREBI_CONFIG_HOME = "$HOME\.config\komorebi"
 	if slices.Contains(selectedPackages, "eza-community.eza") {
 		profile = append(profile, []byte(`
 # EZA
+if (Test-Path alias:ls) { Remove-Item alias:ls }
 function ls { eza -l --icons $args }
 function la { eza -la --icons $args }
 function lt { eza --icons -TL $args }
