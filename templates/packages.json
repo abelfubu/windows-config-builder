@@ -24,6 +24,7 @@
     "profile": []
   },
   {
+    "configFolder": "nvim",
     "icon": "",
     "id": "Neovim.Neovim",
     "description": "Hyperextensible Vim-based text editor",
@@ -87,14 +88,21 @@
     "id": "junegunn.fzf",
     "description": "Command-line fuzzy finder",
     "profile": [
-      "$Env:FZF_DEFAULT_OPTS = @\"\n --preview='bat --color=always {}'\n --bind ctrl-u:preview-up,ctrl-d:preview-down,ctrl-p:toggle-preview\n --color=bg+:#264f78,spinner:#569cd6,hl:#dcdcaa\n --color=fg:#d4d4d4,header:#4ec9b0,info:#d4d4d4,pointer:#569cd6\n --color=marker:#264f78,fg+:#ffffff,prompt:#4fc1ff,hl+:#f44747\n --color=selected-bg:#264f78\n --multi\n \"@"
+      "$Env:FZF_DEFAULT_OPTS = @\"\n --preview='bat --color=always {}'\n --bind ctrl-u:preview-up,ctrl-d:preview-down,ctrl-p:toggle-preview\n --color=bg+:#264f78,spinner:#569cd6,hl:#dcdcaa\n --color=fg:#d4d4d4,header:#4ec9b0,info:#d4d4d4,pointer:#569cd6\n --color=marker:#264f78,fg+:#ffffff,prompt:#4fc1ff,hl+:#f44747\n --color=selected-bg:#264f78\n --multi\n\"@"
     ]
   },
   {
+    "configFolder": "k9s",
     "icon": "",
     "id": "Derailed.k9s",
     "description": "Terminal UI to interact with Kubernetes clusters",
-    "profile": []
+    "profile": [],
+    "symlinks": [
+      {
+        "source": "k9s",
+        "target": "LOCALAPPDATA"
+      }
+    ]
   },
   {
     "icon": "",
@@ -109,6 +117,7 @@
     "profile": []
   },
   {
+    "configFolder": "starship",
     "icon": "",
     "id": "Starship.Starship",
     "description": "Cross-shell prompt for astronauts",

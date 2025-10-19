@@ -15,11 +15,18 @@ import (
 	"github.com/charmbracelet/huh"
 )
 
+type Symlink struct {
+	Source string `json:"source"`
+	Target string `json:"target"`
+}
+
 type Package struct {
-	Profile     []string `json:"profile"`
-	Icon        string   `json:"icon"`
-	Id          string   `json:"id"`
-	Description string   `json:"description"`
+	ConfigFolder *string   `json:"configFolder,omitempty"`
+	Icon         string    `json:"icon"`
+	Id           string    `json:"id"`
+	Description  string    `json:"description"`
+	Profile      []string  `json:"profile"`
+	Symlinks     []Symlink `json:"symlinks,omitempty"`
 }
 
 //go:embed templates/*
@@ -43,11 +50,6 @@ func main() {
 	// Step 3: Ask about symlink
 	if confirm("Do you want to add a symlink to your PowerShell profile?") {
 		addPowershellSymlink()
-	}
-
-	// Step 4: Add Neovim symlink if Neovim was installed
-	if slices.Contains(selected, "Neovim.Neovim") {
-		addNeovimSymlink()
 	}
 }
 
@@ -113,59 +115,41 @@ func addPowershellSymlink() {
 	}
 }
 
-func addNeovimSymlink() {
-	local := os.Getenv("LOCALAPPDATA")
-	src := filepath.Join(config, "nvim")
-	nvimConfigDir := filepath.Join(local, "nvim")
-
-	// Remove existing file or symlink if present
-	os.Remove(nvimConfigDir)
-
-	err := os.Symlink(src, nvimConfigDir)
-	if err != nil {
-		fmt.Println("❌ Failed to create symlink:", err)
-	} else {
-		fmt.Println("✅ Symlink created at PowerShell profile!")
-	}
-}
-
 func createInitialConfiguration(selectedPackages []string, pkgs []Package) {
 	os.MkdirAll(config, os.ModePerm)
 
 	profile := getFileContent("templates/profile.ps1")
 
 	for _, pkg := range pkgs {
-		if !slices.Contains(selectedPackages, pkg.Id) || len(pkg.Profile) == 0 {
+		if !slices.Contains(selectedPackages, pkg.Id) {
 			continue
 		}
 
-		profile = fmt.Appendf(profile, "# %s\n", pkg.Id)
-		for _, env := range pkg.Profile {
-			profile = fmt.Appendf(profile, "%s\n", env)
+		if len(pkg.Profile) > 0 {
+			profile = fmt.Appendf(profile, "# %s\n", pkg.Id)
+			for _, env := range pkg.Profile {
+				profile = fmt.Appendf(profile, "%s\n", env)
+			}
+			profile = fmt.Appendf(profile, "\n")
 		}
-		profile = fmt.Appendf(profile, "\n")
-	}
 
-	if true {
-		os.WriteFile(filepath.Join(config, "profile.ps1"), profile, os.ModePerm)
-		return
-	}
+		if pkg.ConfigFolder != nil {
+			os.CopyFS(filepath.Join(config, *pkg.ConfigFolder), os.DirFS(fmt.Sprintf("templates/%s", *pkg.ConfigFolder)))
+		}
 
-	if slices.Contains(selectedPackages, "Starship.Starship") {
-		os.MkdirAll(filepath.Join(config, "starship"), os.ModePerm)
-		starshipToml := getFileContent("templates/starship.toml")
-		os.WriteFile(filepath.Join(config, "starship", "starship.toml"), starshipToml, os.ModePerm)
-	}
+		if len(pkg.Symlinks) > 0 {
+			fmt.Println("Creating symlinks for", pkg.Id)
+			for _, link := range pkg.Symlinks {
+				target := filepath.Join(os.Getenv(link.Target), link.Source)
 
-	if slices.Contains(selectedPackages, "Neovim.Neovim") {
-		os.MkdirAll(filepath.Join(config, "nvim"), os.ModePerm)
-		initVim := getFileContent("templates/init.lua")
-		os.WriteFile(filepath.Join(config, "nvim", "init.lua"), initVim, os.ModePerm)
-	}
-
-	if slices.Contains(selectedPackages, "Derailed.k9s") {
-		os.CopyFS(filepath.Join(config, "k9s"), os.DirFS("./templates/k9s"))
-		os.Symlink(filepath.Join(os.Getenv("LOCALAPPDATA"), "k9s"), filepath.Join(config, "k9s"))
+				os.Remove(target)
+				source := filepath.Join(filepath.Join(home, ".config"), link.Source)
+				error := os.Symlink(source, target)
+				if error != nil {
+					fmt.Println("❌ Failed to create symlink:", error)
+				}
+			}
+		}
 	}
 
 	os.WriteFile(filepath.Join(config, "profile.ps1"), profile, os.ModePerm)
@@ -195,15 +179,4 @@ func getFileContent(path string) []byte {
 	}
 
 	return content
-}
-
-func Find[T any](slice []T, predicate func(T) bool) (T, bool) {
-	var zero T
-	for _, v := range slice {
-		if predicate(v) {
-			return v, true
-		}
-	}
-
-	return zero, false
 }

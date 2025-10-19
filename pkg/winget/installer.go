@@ -39,6 +39,8 @@ func (p *PackageInstaller) Install(pkgs []string) {
 		return
 	}
 
+	fmt.Println("🔍 Checking installed packages...")
+
 	p.loadInstalledPackages()
 
 	var toInstall []string
