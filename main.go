@@ -16,26 +16,28 @@ import (
 )
 
 type Package struct {
-	Icon        string `json:"icon"`
-	Id          string `json:"id"`
-	Description string `json:"description"`
+	Profile     []string `json:"profile"`
+	Icon        string   `json:"icon"`
+	Id          string   `json:"id"`
+	Description string   `json:"description"`
 }
 
 //go:embed templates/*
 var templates embed.FS
 
 var home = os.Getenv("USERPROFILE")
-var config = filepath.Join(home, ".config")
+var config = filepath.Join(home, ".config-test")
 
 func main() {
 	// Step 1: Install packages
-	selected := selectPackages()
+	packages := getPackages()
+	selected := selectPackages(packages)
 	installer := winget.NewPackageInstaller()
 	installer.Install(selected)
 
 	// Step 2: Create initial configuration files
 	if confirm("Do you want to create initial configuration files?") {
-		createInitialConfiguration(selected)
+		createInitialConfiguration(selected, packages)
 	}
 
 	// Step 3: Ask about symlink
@@ -49,7 +51,7 @@ func main() {
 	}
 }
 
-func selectPackages() []string {
+func getPackages() []Package {
 	data, err := templates.ReadFile("templates/packages.json")
 	if err != nil {
 		fmt.Println("❌ Failed to read packages.json:", err)
@@ -62,6 +64,10 @@ func selectPackages() []string {
 		return nil
 	}
 
+	return pkgs
+}
+
+func selectPackages(pkgs []Package) []string {
 	var options []huh.Option[string]
 	for _, pkg := range pkgs {
 		options = append(options, huh.NewOption(fmt.Sprintf("%s %-30s %s", pkg.Icon, pkg.Id, pkg.Description), pkg.Id))
@@ -123,72 +129,38 @@ func addNeovimSymlink() {
 	}
 }
 
-func createInitialConfiguration(selectedPackages []string) {
+func createInitialConfiguration(selectedPackages []string, pkgs []Package) {
 	os.MkdirAll(config, os.ModePerm)
 
 	profile := getFileContent("templates/profile.ps1")
+
+	for _, pkg := range pkgs {
+		if !slices.Contains(selectedPackages, pkg.Id) || len(pkg.Profile) == 0 {
+			continue
+		}
+
+		profile = fmt.Appendf(profile, "# %s\n", pkg.Id)
+		for _, env := range pkg.Profile {
+			profile = fmt.Appendf(profile, "%s\n", env)
+		}
+		profile = fmt.Appendf(profile, "\n")
+	}
+
+	if true {
+		os.WriteFile(filepath.Join(config, "profile.ps1"), profile, os.ModePerm)
+		return
+	}
 
 	if slices.Contains(selectedPackages, "Starship.Starship") {
 		os.MkdirAll(filepath.Join(config, "starship"), os.ModePerm)
 		starshipToml := getFileContent("templates/starship.toml")
 		os.WriteFile(filepath.Join(config, "starship", "starship.toml"), starshipToml, os.ModePerm)
-		profile = append(profile, []byte(`
-# Starship
-$Env:STARSHIP_CONFIG="$HOME/.config/starship/starship.toml"
-Invoke-Expression (&starship init powershell)
-`)...)
-	}
-
-	if slices.Contains(selectedPackages, "ajeetdsouza.zoxide") {
-		profile = append(profile, []byte(`
-# Zoxide
-Invoke-Expression (& { (zoxide init powershell | Out-String) })
-`)...)
 	}
 
 	if slices.Contains(selectedPackages, "Neovim.Neovim") {
 		os.MkdirAll(filepath.Join(config, "nvim"), os.ModePerm)
 		initVim := getFileContent("templates/init.lua")
 		os.WriteFile(filepath.Join(config, "nvim", "init.lua"), initVim, os.ModePerm)
-	}
-
-	if slices.Contains(selectedPackages, "sharkdp.bat") {
-		profile = append(profile, []byte(`
-# Configure bat config directory
-$Env:BAT_CONFIG_DIR="$HOME\.config\bat"
-`)...)
-	}
-
-	if slices.Contains(selectedPackages, "junegunn.fzf") {
-		profile = append(profile, []byte(`
-# FZF
-$Env:FZF_DEFAULT_OPTS=@"
---preview='bat --color=always {}'
---bind ctrl-u:preview-up,ctrl-d:preview-down,ctrl-p:toggle-preview
---color=bg+:#264f78,spinner:#569cd6,hl:#dcdcaa
---color=fg:#d4d4d4,header:#4ec9b0,info:#d4d4d4,pointer:#569cd6
---color=marker:#264f78,fg+:#ffffff,prompt:#4fc1ff,hl+:#f44747
---color=selected-bg:#264f78
---multi
-"@
-`)...)
-	}
-
-	if slices.Contains(selectedPackages, "LGUG2Z.komorebi") {
-		profile = append(profile, []byte(`
-# KOMOREBI
-$Env:KOMOREBI_CONFIG_HOME = "$HOME\.config\komorebi"
-`)...)
-	}
-
-	if slices.Contains(selectedPackages, "eza-community.eza") {
-		profile = append(profile, []byte(`
-# EZA
-if (Test-Path alias:ls) { Remove-Item alias:ls }
-function ls { eza -l --icons $args }
-function la { eza -la --icons $args }
-function lt { eza --icons -TL $args }
-`)...)
 	}
 
 	if slices.Contains(selectedPackages, "Derailed.k9s") {
@@ -223,4 +195,15 @@ func getFileContent(path string) []byte {
 	}
 
 	return content
+}
+
+func Find[T any](slice []T, predicate func(T) bool) (T, bool) {
+	var zero T
+	for _, v := range slice {
+		if predicate(v) {
+			return v, true
+		}
+	}
+
+	return zero, false
 }
