@@ -240,6 +240,11 @@ function lt { eza --icons -TL $args }
 `)...)
 	}
 
+	if slices.Contains(selectedPackages, "Derailed.k9s") {
+		os.CopyFS(filepath.Join(config, "k9s"), os.DirFS("./templates/k9s"))
+		os.Symlink(filepath.Join(os.Getenv("LOCALAPPDATA"), "k9s"), filepath.Join(config, "k9s"))
+	}
+
 	os.WriteFile(filepath.Join(config, "profile.ps1"), profile, os.ModePerm)
 	fmt.Print("✅ Initial configuration files created!\n")
 }

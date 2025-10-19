@@ -2,10 +2,10 @@ name: Release
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   pull_request:
-    branches: [ main ]
-    types: [ closed ]
+    branches: [main]
+    types: [closed]
 
 permissions:
   contents: write
@@ -15,110 +15,110 @@ jobs:
   release:
     if: github.event_name == 'push' || (github.event.pull_request.merged == true)
     runs-on: ubuntu-latest
-    
+
     steps:
-    - uses: actions/checkout@v4
-      with:
-        fetch-depth: 0
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-    - name: Set up Go
-      uses: actions/setup-go@v4
-      with:
-        go-version: '1.23'
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.23'
 
-    - name: Tidy dependencies
-      run: go mod tidy
+      - name: Tidy dependencies
+        run: go mod tidy
 
-    - name: Semantic Version
-      id: version
-      uses: paulhatch/semantic-version@v5.4.0
-      with:
-        tag_prefix: "v"
-        major_pattern: "(BREAKING CHANGE:|breaking:)"
-        minor_pattern: "(feat:|feature:)"
-        patch_pattern: "(fix:|bugfix:|patch:)"
-        version_format: "${major}.${minor}.${patch}"
-        search_commit_body: true
-        user_format_type: "csv"
+      - name: Semantic Version
+        id: version
+        uses: paulhatch/semantic-version@v5.4.0
+        with:
+          tag_prefix: 'v'
+          major_pattern: '(BREAKING CHANGE:|breaking:)'
+          minor_pattern: '(feat:|feature:)'
+          patch_pattern: '(fix:|bugfix:|patch:)'
+          version_format: '${major}.${minor}.${patch}'
+          search_commit_body: true
+          user_format_type: 'csv'
 
-    - name: Build for Windows
-      run: |
-        # Build for Windows x64
-        GOOS=windows GOARCH=amd64 go build -ldflags "-s -w" -o windows-config-builder.exe
+      - name: Build for Windows
+        run: |
+          # Build for Windows x64
+          GOOS=windows GOARCH=amd64 go build -ldflags "-s -w" -o windows-config-builder.exe
 
-    - name: Get file hash
-      id: hash
-      run: |
-        HASH=$(sha256sum windows-config-builder.exe | cut -d' ' -f1)
-        echo "sha256=$HASH" >> $GITHUB_OUTPUT
-        echo "SHA256: $HASH"
+      - name: Get file hash
+        id: hash
+        run: |
+          HASH=$(sha256sum windows-config-builder.exe | cut -d' ' -f1)
+          echo "sha256=$HASH" >> $GITHUB_OUTPUT
+          echo "SHA256: $HASH"
 
-    - name: Create Release
-      uses: softprops/action-gh-release@v1
-      with:
-        tag_name: ${{ steps.version.outputs.version_tag }}
-        name: Release ${{ steps.version.outputs.version_tag }}
-        body: |
-          ## Windows Configuration Builder
-          
-          Automated Windows development environment setup using winget package manager.
-          
-          **Requirements**: Windows 10/11 with winget installed
-          
-          ## Changes
-          - Auto-generated release from commit ${{ github.sha }}
-          
-          ## Installation
-          
-          ### Option 1: Direct Download
-          Download the `windows-config-builder.exe` file and run it on your Windows machine.
-          
-          ### Option 2: Winget (when available)
-          ```powershell
-          winget install Abelfubu.WindowsConfigBuilder
-          ```
-        files: windows-config-builder.exe
-        draft: false
-        prerelease: false
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ steps.version.outputs.version_tag }}
+          name: Release ${{ steps.version.outputs.version_tag }}
+          body: |
+            ## Windows Configuration Builder
+
+            Automated Windows development environment setup using winget package manager.
+
+            **Requirements**: Windows 10/11 with winget installed
+
+            ## Changes
+            - Auto-generated release from commit ${{ github.sha }}
+
+            ## Installation
+
+            ### Option 1: Direct Download
+            Download the `windows-config-builder.exe` file and run it on your Windows machine.
+
+            ### Option 2: Winget (when available)
+            ```powershell
+            winget install Abelfubu.WindowsConfigBuilder
+            ```
+          files: windows-config-builder.exe
+          draft: false
+          prerelease: false
 
   winget-submission:
     needs: release
     runs-on: windows-latest
 
     steps:
-    - name: Get release info
-      id: release_info
-      shell: pwsh
-      run: |
-        $latestRelease = Invoke-RestMethod -Uri "https://api.github.com/repos/${{ github.repository }}/releases/latest"
-        $version = $latestRelease.tag_name
-        $downloadUrl = $latestRelease.assets[0].browser_download_url
-        echo "version=$version" >> $env:GITHUB_OUTPUT
-        echo "download_url=$downloadUrl" >> $env:GITHUB_OUTPUT
-        Write-Host "Version: $version"
-        Write-Host "Download URL: $downloadUrl"
+      - name: Get release info
+        id: release_info
+        shell: pwsh
+        run: |
+          $latestRelease = Invoke-RestMethod -Uri "https://api.github.com/repos/${{ github.repository }}/releases/latest"
+          $version = $latestRelease.tag_name
+          $downloadUrl = $latestRelease.assets[0].browser_download_url
+          echo "version=$version" >> $env:GITHUB_OUTPUT
+          echo "download_url=$downloadUrl" >> $env:GITHUB_OUTPUT
+          Write-Host "Version: $version"
+          Write-Host "Download URL: $downloadUrl"
 
-    - name: Install wingetcreate
-      shell: pwsh
-      run: |
-        Invoke-WebRequest -Uri "https://aka.ms/wingetcreate/latest" -OutFile "wingetcreate.exe"
+      - name: Install wingetcreate
+        shell: pwsh
+        run: |
+          Invoke-WebRequest -Uri "https://aka.ms/wingetcreate/latest" -OutFile "wingetcreate.exe"
 
-    - name: Configure git identity (required for PRs)
-      shell: pwsh
-      run: |
-        git config --global user.name "github-actions[bot]"
-        git config --global user.email "github-actions[bot]@users.noreply.github.com"
+      - name: Configure git identity (required for PRs)
+        shell: pwsh
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
 
-    - name: Submit new version to WinGet
-      shell: pwsh
-      env:
-        WINGET_TOKEN: ${{ secrets.WINGET_TOKEN }}
-      run: |
-        $version = "${{ steps.release_info.outputs.version }}"
-        $downloadUrl = "${{ steps.release_info.outputs.download_url }}"
+      - name: Submit new version to WinGet
+        shell: pwsh
+        env:
+          WINGET_TOKEN: ${{ secrets.WINGET_TOKEN }}
+        run: |
+          $version = "${{ steps.release_info.outputs.version }}"
+          $downloadUrl = "${{ steps.release_info.outputs.download_url }}"
 
-        .\wingetcreate.exe update Abelfubu.WindowsConfigBuilder `
-          --version $version `
-          --urls $downloadUrl `
-          --token $env:WINGET_TOKEN `
-          --submit
+          .\wingetcreate.exe update Abelfubu.WindowsConfigBuilder `
+            --version $version `
+            --urls $downloadUrl `
+            --token $env:WINGET_TOKEN `
+            --submit
