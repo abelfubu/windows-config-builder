@@ -1,0 +1,102 @@
+[
+  {
+    "icon": "",
+    "id": "Git.Git",
+    "description": "Distributed version control system"
+  },
+  {
+    "icon": "",
+    "id": "GitHub.cli",
+    "description": "GitHub's official command line tool"
+  },
+  {
+    "icon": "",
+    "id": "JesseDuffield.Lazydocker",
+    "description": "Simple terminal UI for docker commands"
+  },
+  {
+    "icon": "󰎙",
+    "id": "CoreyButler.NVMforWindows",
+    "description": "Node Version Manager for Windows"
+  },
+  {
+    "icon": "",
+    "id": "Neovim.Neovim",
+    "description": "Hyperextensible Vim-based text editor"
+  },
+  {
+    "icon": "",
+    "id": "Microsoft.PowerToys",
+    "description": "Windows system utilities to maximize productivity"
+  },
+  {
+    "icon": "",
+    "id": "SUSE.RancherDesktop",
+    "description": "Container management and Kubernetes on the desktop"
+  },
+  {
+    "icon": "",
+    "id": "BurntSushi.ripgrep.MSVC",
+    "description": "Recursively searches directories for a regex pattern"
+  },
+  {
+    "icon": "",
+    "id": "zig.zig",
+    "description": "General-purpose programming language and toolchain"
+  },
+  {
+    "icon": "",
+    "id": "sharkdp.bat",
+    "description": "A cat clone with wings (syntax highlighting)"
+  },
+  {
+    "icon": "󰨇",
+    "id": "Clement.bottom",
+    "description": "Cross-platform graphical process/system monitor"
+  },
+  {
+    "icon": "",
+    "id": "eza-community.eza",
+    "description": "Modern replacement for 'ls' with colors and icons"
+  },
+  {
+    "icon": "󰈞",
+    "id": "sharkdp.fd",
+    "description": "Simple, fast and user-friendly alternative to 'find'"
+  },
+  {
+    "icon": "",
+    "id": "junegunn.fzf",
+    "description": "Command-line fuzzy finder"
+  },
+  {
+    "icon": "",
+    "id": "Derailed.k9s",
+    "description": "Terminal UI to interact with Kubernetes clusters"
+  },
+  {
+    "icon": "",
+    "id": "LGUG2Z.komorebi",
+    "description": "Tiling window manager for Windows"
+  },
+  {
+    "icon": "",
+    "id": "JesseDuffield.lazygit",
+    "description": "Simple terminal UI for git commands"
+  },
+  {
+    "icon": "",
+    "id": "Starship.Starship",
+    "description": "Cross-shell prompt for astronauts"
+  },
+  {
+    "icon": "",
+    "id": "LGUG2Z.whkd",
+    "description": "Windows hotkey daemon"
+  },
+  {
+    "icon": "󰬡",
+    "id": "ajeetdsouza.zoxide",
+    "description": "Smarter cd command inspired by z and autojump"
+  }
+]

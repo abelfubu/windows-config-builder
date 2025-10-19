@@ -2,16 +2,24 @@ package main
 
 import (
 	"embed"
+	"encoding/json"
 	"fmt"
-	"github.com/abelfubu/windows-config-builder/pkg/winget"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"slices"
 	"strings"
 
+	"github.com/abelfubu/windows-config-builder/pkg/winget"
+
 	"github.com/charmbracelet/huh"
 )
+
+type Package struct {
+	Icon        string `json:"icon"`
+	Id          string `json:"id"`
+	Description string `json:"description"`
+}
 
 //go:embed templates/*
 var templates embed.FS
@@ -42,36 +50,21 @@ func main() {
 }
 
 func selectPackages() []string {
-	pkgs := []struct {
-		id          string
-		description string
-	}{
-		{"Git.Git", "Distributed version control system"},
-		{"GitHub.cli", "GitHub's official command line tool"},
-		{"JesseDuffield.Lazydocker", "Simple terminal UI for docker commands"},
-		{"CoreyButler.NVMforWindows", "Node Version Manager for Windows"},
-		{"Neovim.Neovim", "Hyperextensible Vim-based text editor"},
-		{"Microsoft.PowerShell.Preview", "Cross-platform automation and configuration tool"},
-		{"Microsoft.PowerToys", "Windows system utilities to maximize productivity"},
-		{"SUSE.RancherDesktop", "Container management and Kubernetes on the desktop"},
-		{"BurntSushi.ripgrep.MSVC", "Recursively searches directories for a regex pattern"},
-		{"zig.zig", "General-purpose programming language and toolchain"},
-		{"sharkdp.bat", "A cat clone with wings (syntax highlighting)"},
-		{"Clement.bottom", "Cross-platform graphical process/system monitor"},
-		{"eza-community.eza", "Modern replacement for 'ls' with colors and icons"},
-		{"sharkdp.fd", "Simple, fast and user-friendly alternative to 'find'"},
-		{"junegunn.fzf", "Command-line fuzzy finder"},
-		{"Derailed.k9s", "Terminal UI to interact with Kubernetes clusters"},
-		{"LGUG2Z.komorebi", "Tiling window manager for Windows"},
-		{"JesseDuffield.lazygit", "Simple terminal UI for git commands"},
-		{"Starship.Starship", "Cross-shell prompt for astronauts"},
-		{"LGUG2Z.whkd", "Windows hotkey daemon"},
-		{"ajeetdsouza.zoxide", "Smarter cd command inspired by z and autojump"},
+	data, err := templates.ReadFile("templates/packages.json")
+	if err != nil {
+		fmt.Println("❌ Failed to read packages.json:", err)
+		return nil
+	}
+
+	var pkgs []Package
+	if err := json.Unmarshal(data, &pkgs); err != nil {
+		fmt.Println("❌ Failed to parse packages.json:", err)
+		return nil
 	}
 
 	var options []huh.Option[string]
 	for _, pkg := range pkgs {
-		options = append(options, huh.NewOption(fmt.Sprintf("%-45s - %s", pkg.id, pkg.description), pkg.id))
+		options = append(options, huh.NewOption(fmt.Sprintf("%s %-30s %s", pkg.Icon, pkg.Id, pkg.Description), pkg.Id))
 	}
 
 	var selected []string
