@@ -3,6 +3,7 @@ package main
 import (
 	"embed"
 	"fmt"
+	"github.com/abelfubu/windows-config-builder/pkg/winget"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -116,17 +117,8 @@ func installWingetPkgs() []string {
 
 	form.Run()
 
-	for _, pkg := range selected {
-		fmt.Printf("Installing %s...\n", pkg)
-		cmd := exec.Command("winget", "install", "--id", pkg, "--accept-package-agreements", "--accept-source-agreements", "-h")
-		cmd.Stdout = os.Stdout
-		cmd.Stderr = os.Stderr
-		cmd.Run()
-	}
-
-	if len(selected) > 0 {
-		fmt.Println("✅ Done installing selected packages!")
-	}
+	installer := winget.NewPackageInstaller()
+	installer.Install(selected)
 
 	return selected
 }
