@@ -1,0 +1,143 @@
+[
+  {
+    "icon": "",
+    "id": "Git.Git",
+    "description": "Distributed version control system",
+    "profile": []
+  },
+  {
+    "icon": "",
+    "id": "GitHub.cli",
+    "description": "GitHub's official command line tool",
+    "profile": []
+  },
+  {
+    "icon": "",
+    "id": "JesseDuffield.Lazydocker",
+    "description": "Simple terminal UI for docker commands",
+    "profile": []
+  },
+  {
+    "icon": "󰎙",
+    "id": "CoreyButler.NVMforWindows",
+    "description": "Node Version Manager for Windows",
+    "profile": []
+  },
+  {
+    "configFolder": "nvim",
+    "icon": "",
+    "id": "Neovim.Neovim",
+    "description": "Hyperextensible Vim-based text editor",
+    "profile": []
+  },
+  {
+    "icon": "",
+    "id": "Microsoft.PowerToys",
+    "description": "Windows system utilities to maximize productivity",
+    "profile": []
+  },
+  {
+    "icon": "",
+    "id": "SUSE.RancherDesktop",
+    "description": "Container management and Kubernetes on the desktop",
+    "profile": []
+  },
+  {
+    "icon": "",
+    "id": "BurntSushi.ripgrep.MSVC",
+    "description": "Recursively searches directories for a regex pattern",
+    "profile": []
+  },
+  {
+    "icon": "",
+    "id": "zig.zig",
+    "description": "General-purpose programming language and toolchain",
+    "profile": []
+  },
+  {
+    "icon": "",
+    "id": "sharkdp.bat",
+    "description": "A cat clone with wings (syntax highlighting)",
+    "profile": ["$Env:BAT_CONFIG_DIR = \"$HOME\\.config\\bat\""]
+  },
+  {
+    "icon": "󰨇",
+    "id": "Clement.bottom",
+    "description": "Cross-platform graphical process/system monitor",
+    "profile": []
+  },
+  {
+    "icon": "",
+    "id": "eza-community.eza",
+    "description": "Modern replacement for 'ls' with colors and icons",
+    "profile": [
+      "if (Test-Path alias:ls) { Remove-Item alias:ls }",
+      "function ls { eza -l --icons $args }",
+      "function la { eza -la --icons $args }",
+      "function lt { eza --icons -TL $args }"
+    ]
+  },
+  {
+    "icon": "󰈞",
+    "id": "sharkdp.fd",
+    "description": "Simple, fast and user-friendly alternative to 'find'",
+    "profile": []
+  },
+  {
+    "icon": "",
+    "id": "junegunn.fzf",
+    "description": "Command-line fuzzy finder",
+    "profile": [
+      "$Env:FZF_DEFAULT_OPTS = @\"\n --preview='bat --color=always {}'\n --bind ctrl-u:preview-up,ctrl-d:preview-down,ctrl-p:toggle-preview\n --color=bg+:#264f78,spinner:#569cd6,hl:#dcdcaa\n --color=fg:#d4d4d4,header:#4ec9b0,info:#d4d4d4,pointer:#569cd6\n --color=marker:#264f78,fg+:#ffffff,prompt:#4fc1ff,hl+:#f44747\n --color=selected-bg:#264f78\n --multi\n\"@"
+    ]
+  },
+  {
+    "configFolder": "k9s",
+    "icon": "",
+    "id": "Derailed.k9s",
+    "description": "Terminal UI to interact with Kubernetes clusters",
+    "profile": [],
+    "symlinks": [
+      {
+        "source": "k9s",
+        "target": "LOCALAPPDATA"
+      }
+    ]
+  },
+  {
+    "icon": "",
+    "id": "LGUG2Z.komorebi",
+    "description": "Tiling window manager for Windows",
+    "profile": ["$Env:KOMOREBI_CONFIG_HOME = \"$HOME\\.config\\komorebi\""]
+  },
+  {
+    "icon": "",
+    "id": "JesseDuffield.lazygit",
+    "description": "Simple terminal UI for git commands",
+    "profile": []
+  },
+  {
+    "configFolder": "starship",
+    "icon": "",
+    "id": "Starship.Starship",
+    "description": "Cross-shell prompt for astronauts",
+    "profile": [
+      "$Env:STARSHIP_CONFIG = \"$HOME/.config/starship/starship.toml\"",
+      "Invoke-Expression (&starship init powershell)"
+    ]
+  },
+  {
+    "icon": "",
+    "id": "LGUG2Z.whkd",
+    "description": "Windows hotkey daemon",
+    "profile": []
+  },
+  {
+    "icon": "󰬡",
+    "id": "ajeetdsouza.zoxide",
+    "description": "Smarter cd command inspired by z and autojump",
+    "profile": [
+      "Invoke-Expression (& { (zoxide init powershell | Out-String) })"
+    ]
+  }
+]
