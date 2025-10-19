@@ -13,7 +13,6 @@ type PackageInstaller struct {
 
 func NewPackageInstaller() *PackageInstaller {
 	installer := new(PackageInstaller)
-	installer.loadInstalledPackages()
 
 	return installer
 }
@@ -36,6 +35,12 @@ func (p *PackageInstaller) hasPackage(pkg string) bool {
 }
 
 func (p *PackageInstaller) Install(pkgs []string) {
+	if len(pkgs) < 1 {
+		return
+	}
+
+	p.loadInstalledPackages()
+
 	var toInstall []string
 
 	for _, pkg := range pkgs {

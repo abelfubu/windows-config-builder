@@ -21,11 +21,13 @@ var config = filepath.Join(home, ".config")
 
 func main() {
 	// Step 1: Install packages
-	selectedPackages := installWingetPkgs()
+	selected := selectPackages()
+	installer := winget.NewPackageInstaller()
+	installer.Install(selected)
 
 	// Step 2: Create initial configuration files
 	if confirm("Do you want to create initial configuration files?") {
-		createInitialConfiguration(selectedPackages)
+		createInitialConfiguration(selected)
 	}
 
 	// Step 3: Ask about symlink
@@ -34,78 +36,45 @@ func main() {
 	}
 
 	// Step 4: Add Neovim symlink if Neovim was installed
-	if slices.Contains(selectedPackages, "Neovim.Neovim") {
+	if slices.Contains(selected, "Neovim.Neovim") {
 		addNeovimSymlink()
 	}
 }
 
-func installWingetPkgs() []string {
-	pkgs := []string{
-		"Git.Git",
-		"GitHub.cli",
-		"JesseDuffield.Lazydocker",
-		"CoreyButler.NVMforWindows",
-		"Neovim.Neovim",
-		"Microsoft.PowerShell.Preview",
-		"Microsoft.PowerToys",
-		"SUSE.RancherDesktop",
-		"BurntSushi.ripgrep.MSVC",
-		"zig.zig",
-		"sharkdp.bat",
-		"Clement.bottom",
-		"eza-community.eza",
-		"sharkdp.fd",
-		"junegunn.fzf",
-		"Derailed.k9s",
-		"LGUG2Z.komorebi",
-		"JesseDuffield.lazygit",
-		"Starship.Starship",
-		"LGUG2Z.whkd",
-		"ajeetdsouza.zoxide",
+func selectPackages() []string {
+	pkgs := []struct {
+		id          string
+		description string
+	}{
+		{"Git.Git", "Distributed version control system"},
+		{"GitHub.cli", "GitHub's official command line tool"},
+		{"JesseDuffield.Lazydocker", "Simple terminal UI for docker commands"},
+		{"CoreyButler.NVMforWindows", "Node Version Manager for Windows"},
+		{"Neovim.Neovim", "Hyperextensible Vim-based text editor"},
+		{"Microsoft.PowerShell.Preview", "Cross-platform automation and configuration tool"},
+		{"Microsoft.PowerToys", "Windows system utilities to maximize productivity"},
+		{"SUSE.RancherDesktop", "Container management and Kubernetes on the desktop"},
+		{"BurntSushi.ripgrep.MSVC", "Recursively searches directories for a regex pattern"},
+		{"zig.zig", "General-purpose programming language and toolchain"},
+		{"sharkdp.bat", "A cat clone with wings (syntax highlighting)"},
+		{"Clement.bottom", "Cross-platform graphical process/system monitor"},
+		{"eza-community.eza", "Modern replacement for 'ls' with colors and icons"},
+		{"sharkdp.fd", "Simple, fast and user-friendly alternative to 'find'"},
+		{"junegunn.fzf", "Command-line fuzzy finder"},
+		{"Derailed.k9s", "Terminal UI to interact with Kubernetes clusters"},
+		{"LGUG2Z.komorebi", "Tiling window manager for Windows"},
+		{"JesseDuffield.lazygit", "Simple terminal UI for git commands"},
+		{"Starship.Starship", "Cross-shell prompt for astronauts"},
+		{"LGUG2Z.whkd", "Windows hotkey daemon"},
+		{"ajeetdsouza.zoxide", "Smarter cd command inspired by z and autojump"},
 	}
 
-	descriptions := map[string]string{
-		"Git.Git":                      "Distributed version control system",
-		"GitHub.cli":                   "GitHub's official command line tool",
-		"JesseDuffield.Lazydocker":     "Simple terminal UI for docker commands",
-		"CoreyButler.NVMforWindows":    "Node Version Manager for Windows",
-		"Neovim.Neovim":                "Hyperextensible Vim-based text editor",
-		"Microsoft.PowerShell.Preview": "Cross-platform automation and configuration tool",
-		"Microsoft.PowerToys":          "Windows system utilities to maximize productivity",
-		"SUSE.RancherDesktop":          "Container management and Kubernetes on the desktop",
-		"BurntSushi.ripgrep.MSVC":      "Recursively searches directories for a regex pattern",
-		"zig.zig":                      "General-purpose programming language and toolchain",
-		"sharkdp.bat":                  "A cat clone with wings (syntax highlighting)",
-		"Clement.bottom":               "Cross-platform graphical process/system monitor",
-		"eza-community.eza":            "Modern replacement for 'ls' with colors and icons",
-		"sharkdp.fd":                   "Simple, fast and user-friendly alternative to 'find'",
-		"junegunn.fzf":                 "Command-line fuzzy finder",
-		"Derailed.k9s":                 "Terminal UI to interact with Kubernetes clusters",
-		"LGUG2Z.komorebi":              "Tiling window manager for Windows",
-		"JesseDuffield.lazygit":        "Simple terminal UI for git commands",
-		"Starship.Starship":            "Cross-shell prompt for astronauts",
-		"LGUG2Z.whkd":                  "Windows hotkey daemon",
-		"ajeetdsouza.zoxide":           "Smarter cd command inspired by z and autojump",
+	var options []huh.Option[string]
+	for _, pkg := range pkgs {
+		options = append(options, huh.NewOption(fmt.Sprintf("%-45s - %s", pkg.id, pkg.description), pkg.id))
 	}
 
 	var selected []string
-	var options []huh.Option[string]
-
-	// Find the longest package name for alignment
-	maxLen := 0
-	for _, pkg := range pkgs {
-		if len(pkg) > maxLen {
-			maxLen = len(pkg)
-		}
-	}
-
-	for _, pkg := range pkgs {
-		desc := descriptions[pkg]
-		padding := (maxLen + 5) - len(pkg)
-		spaces := strings.Repeat(" ", padding)
-		options = append(options, huh.NewOption(fmt.Sprintf("%s%s - %s", pkg, spaces, desc), pkg))
-	}
-
 	form := huh.NewForm(
 		huh.NewGroup(
 			huh.NewMultiSelect[string]().
@@ -116,9 +85,6 @@ func installWingetPkgs() []string {
 	)
 
 	form.Run()
-
-	installer := winget.NewPackageInstaller()
-	installer.Install(selected)
 
 	return selected
 }
